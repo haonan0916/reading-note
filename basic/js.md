@@ -16,6 +16,166 @@
 > 3. 对象（方法）调用模式；
 > 4. 直接（函数）调用模式。
 
+
+
+> [!IMPORTANT]
+>
+> 箭头函数它的 `this` 由定义它的结构代码时父级执行上下文决定的
+>
+> - 如果是在全局环境,或者是在一个对象里,它的父级执行上下文就是全局环境,它的 `this` 就指向了`window`
+> - 如果它的外部是一个函数,那么它的 `this` 就指向了函数的执行上下文。而函数的执行上下文就是活的.取决于调用时的情况.也就上面列举的四种情况.
+
+
+
+> [!IMPORTANT]
+>
+> 立即执行匿名函数表达式是由 `window`  调用的，`this` 指向 `window` 。
+
+
+
+## this 的代码输出题
+
+```js
+var obj = { 
+  name: 'cuggz', 
+  fun: function(){ 
+     console.log(this.name); 
+  } 
+} 
+obj.fun()     // cuggz
+new obj.fun() // undefined
+```
+
+> [!TIP]
+>
+> `obj.fun()` 是取出了 `obj.fun` 作为构造函数，此时的 `this` 指向的是构造函数， 因为没有 `name` 参数，输出：`undefined` 
+
+
+
+```js
+var myObject = {
+    foo: "bar",
+    func: function() {
+        var self = this;
+        console.log(this.foo);  
+        console.log(self.foo);  
+        (function() {
+            console.log(this.foo);  
+            console.log(self.foo);  
+        }());
+    }
+};
+myObject.func();
+```
+
+> [!TIP]
+>
+> 输出结果：`bar bar undefined bar`
+>
+> 
+>
+> **解析：**
+>
+> 1. 首先 `func` 是由 `myObject` 调用的，`this` 指向 `myObject`。又因为 `var self = this;` 所以 `self` 指向 `myObject`。
+> 2. 这个立即执行匿名函数表达式是由 `window` 调用的，`this` 指向 `window` 。立即执行匿名函数的作用域处于 `myObject.func` 的作用域中，在这个作用域找不到 `self` 变量，沿着作用域链向上查找 `self` 变量，找到了指向 `myObject` 对象的 `self`。
+
+
+
+```js
+var length = 10;
+function fn() {
+    console.log(this.length);
+}
+ 
+var obj = {
+  length: 5,
+  method: function(fn) {
+    fn();
+    arguments[0]();
+  }
+};
+ 
+obj.method(fn, 1);
+```
+
+> [!TIP]
+>
+> 输出结果：` 10 2 `
+>
+> 
+>
+> **解析：**
+>
+> 1. 第一次执行 `fn()`，`this` 指向 `window` 对象，输出 `10`。
+> 2. 第二次执行 `arguments[0]( )`，相当于 `arguments` 调用方法，`this` 指向 `arguments`，而这里传了两个参数，故输出 `arguments` 长度为 `2`。
+
+
+
+```js
+var a = 1;
+function printA(){
+  console.log(this.a);
+}
+var obj={
+  a:2,
+  foo:printA,
+  bar:function(){
+    printA();
+  }
+}
+
+obj.foo(); // 2
+obj.bar(); // 1
+var foo = obj.foo;
+foo(); // 1
+```
+
+> [!TIP]
+>
+> 输出结果：` 2 1 1` 
+>
+> 
+>
+> **解析：**
+>
+> 1. `obj.foo()`，`foo` 的 `this` 指向 `obj` 对象，所以 `a` 会输出 `2`；
+> 2. `obj.bar()`，`printA` 在 `bar` 方法中执行，所以此时 `printA` 的 `this` 指向的是 `window`，所以会输出 `1`；
+> 3. `foo()`，`foo` 是在全局对象中执行的，所以其 `this` 指向的是 `window`，所以会输出 `1`；
+
+
+
+```js
+ var a = 10; 
+ var obt = { 
+   a: 20, 
+   fn: function(){ 
+     var a = 30; 
+     console.log(this.a)
+   } 
+ }
+ obt.fn();  // 20
+ obt.fn.call(); // 10
+ (obt.fn)(); // 20
+```
+
+
+
+> [!TIP]
+>
+> 输出结果：` 20  10  20 `
+>
+> 
+>
+> **解析：**
+>
+> 1.  `obt.fn()`，`fn` 是由 `obt` 调用的，所以其 `this` 指向 `obt` 对象，会打印出 `20`；
+> 2.  `obt.fn.call()`，这里 `call` 的参数啥都没写，就表示 `null`，我们知道如果 `call` 的参数为 `undefined` 或 `null` ，那么 `this` 就会指向全局对象 `this`，所以会打印出 `10`；
+> 3.  `(obt.fn)()`， 这里给表达式加了括号，**而括号的作用是改变表达式的运算顺序**，而在这里加与不加括号并无影响；相当于  `obt.fn()`，所以会打印出 `20`；
+
+
+
+
+
 # Promise 相关问题
 
 ## 1. Promise.all 和 Promise.race 的区别和使用场景
@@ -223,6 +383,10 @@ p.then(data => {
 });
 ```
 
+> [!TIP]
+>
+> 无论是 `then` 还是 `catch` 中，只要 `throw` 抛出了错误，就会被 `catch` 捕获，如果没有 `throw` 出错误，就被继续执行后面的 `then`。
+
 #### 3. all()
 
 `all`方法可以完成并行任务， 它接收一个数组，数组的每一项都是一个 `promise`对象。当数组中所有的 `promise`的状态都达到 `fulfilled`的时候，`all`方法的状态就会变成 `fulfilled`，如果有一个状态变成了 `rejected`，那么 `all`方法的状态就会变成 `rejected`。
@@ -326,6 +490,10 @@ promise
 
 上面代码中，如果不使用 `finally`方法，同样的语句需要为成功和失败两种情况各写一次。有了 `finally`方法，则只需要写一次。
 
+> [!TIP]
+>
+> `.finally`的返回值如果在没有抛出错误的情况下默认会是上一个 `Promise` 的返回值
+
 ## 4. 对 async/await 的理解
 
 `async/await` 其实是 `Generator` 的语法糖，它能实现的效果都能用 `then` 链来实现，它是为优化 `then` 链而开发出来的。从字面上来看，`async` 是“异步”的简写，`await` 则为等待，所以很好理解 `async` 用于申明一个 `function` 是异步的，而 `await` 用于等待一个异步方法执行完成。当然语法上强制规定 `await` **只能出现在 `asnyc` 函数中**，先来看看 `async` 函数返回了什么：
@@ -363,6 +531,30 @@ result.then(v => {
 >
 > **注意：**`Promise.resolve(x)` 可以看作是 `new Promise(resolve => resolve(x))` 的简写，可以用于快速封装字面量对象或其他对象，将其封装成 `Promise` 实例。
 
+> [!CAUTION]
+>
+> 如果 `async` 函数中抛出了错误，就会终止错误结果，不会继续向下执行。
+>
+> ```js
+> async function async1 () {
+>   await async2();
+>   console.log('async1');
+>   return 'async1 success'
+> }
+> async function async2 () {
+>   return new Promise((resolve, reject) => {
+>     console.log('async2')
+>     reject('error')
+>   })
+> }
+> async1().then(res => console.log(res))
+> ```
+>
+> 输出：
+>
+> `async2`
+> `Uncaught (in promise) error`
+
 ## 5. await 到底在等啥？
 
 `await` 在等待什么呢？一般来说，都认为 `await` 是在等待一个 `async` 函数完成。不过按语法说明，`await` 等待的是一个表达式，这个表达式的计算结果是 `Promise` 对象或者其它值（换句话说，就是没有特殊限定）。
@@ -388,6 +580,7 @@ test();
 
 - 如果它等到的不是一个 `Promise` 对象，那 `await` 表达式的运算结果就是它等到的东西。
 - 如果它等到的是一个 `Promise` 对象，`await` 就忙起来了，**它会阻塞后面的代码**，等着 `Promise` 对象 `resolve`，然后得到 `resolve` 的值，作为 `await` 表达式的运算结果。
+- 如果 `await` 等的 `Promise`没有返回值，则 `await` 后面的代码不会执行；
 
 来看一个例子：
 
@@ -569,6 +762,28 @@ function throttle(fn, delay) {
 > **`bind()`** 方法创建一个新函数，当调用该新函数时，它会调用原始函数并将其 `this` 关键字设置为给定的值，同时，还可以传入一系列指定的参数，这些参数会插入到调用新函数时传入的参数的前面。`bind` 方法通过传入一个对象，返回一个 `this` 绑定了传入对象的新函数。这个函数的 `this` 指向除了使用 `new` 时会被改变，其他情况下都不会改变。
 >
 > `bind` 创建的新函数与原函数有相同的原型（`prototype`）。
+
+
+
+> [!CAUTION]
+>
+> 如果第一个参数传入的对象调用者是 `null` 或者 `undefined`，`call` 方法将把全局对象（浏览器上是  `window` 对象）作为 `this` 的值。所以，不管传入 `null`  还是 `undefined`，其 `this` 都是全局对象 `window` 。所以，在浏览器上答案是输出 `window` 对象。
+>
+> 要注意的是，在严格模式中，`null` 就是 `null`，`undefined` 就是 `undefined`。
+>
+> ```js
+> 'use strict';
+> 
+> function a() {
+>     console.log(this);
+> }
+> a.call(null); // null
+> a.call(undefined); // undefined
+> ```
+
+
+
+
 
 # 异步编程
 
@@ -861,7 +1076,7 @@ obj2.a = null;
 
 > [!TIP]
 >
-> 添加任务到微队列的主要方式主要是使用 `Promise、MutationObserver`
+> 添加任务到微队列的主要方式主要是使用 `Promise、MutationObserver、process.nextTick`
 >
 > 例如：
 >
@@ -1147,4 +1362,140 @@ function deepCopy(object) {
     return newObject;
 }
 ```
+
+
+
+# 前端终止请求的三种方式
+
+## 1. abort()
+
+`XMLHttpRequest.abort() ` 方法用于终止 `XMLHttpRequest` 对象的请求，该方法没有参数，也没有返回值。当调用该方法时，如果对应 `XMLHttpRequest` 对象的请求已经被发送并且正在处理中，则会中止该请求；如果请求已经完成（即已经接收到完整的响应），则不会执行任何操作。而且调用该方法后，还会触发 `XMLHttpRequest `对象的 `abort` 事件，我们可以在该事件的处理函数中执行后续相关逻辑代码，例如清除请求相关数据等等。
+
+ 当一个请求被终止后，该请求的 `readyState` 将会变为 `0`，并且 `status` 属性也会变为 `0`。
+
+
+```js
+// 创建XMLHttpRequest对象
+const xhr = new XMLHttpRequest();
+// 请求地址
+const url = "https://developer.mozilla.org/";
+// 初始化请求
+xhr.open('GET', url, true);
+// 发送请求
+xhr.send();
+// 监听取消请求
+xhr.addEventListener('abort', function () {
+	console.log('请求被abort()取消了');
+});
+// 定时器模拟取消请求
+setTimeout(() => {
+	// 取消请求
+	xhr.abort();
+	// 取消请求之后的状态status
+	console.log('abort()之后的xhr.status---', xhr.status);
+	// 取消请求之后的状态readyState
+	console.log('abort()之后的xhr.readyState---', xhr.readyState);
+}, 100);
+
+```
+
+
+
+## 2. AbortController（新版本）
+
+ 在 `axiso` 的 `0.22.0` 版本开始，需要使用浏览器原生的 `AbortController` 来终止请求，是目前推荐用的方法。当使用该方法终止请求时，如果对应请求已经被发送并且正在处理中，则会中止该请求；如果请求已经完成（即已经接收到完整的响应），则不会执行任何操作。
+
+ 我们想监听到终止请求的操作，并进行后续处理，有两种方法：
+
+1. 使用 `AbortController` 提供的 `onabort` 事件，通过监听该事件，并绑定事件处理函数，在函数中进行后续处理。
+
+2. 使用 `try..catch`，终止请求之后，会触发 `catch`，在 `catch` 中进行后续处理。如果同时使用 `onabort` 事件和 `try..catch` ，则会先触发 `onabort` 事件，再触发 `try..catch`。
+
+
+
+```js
+// 以vue项目中使用axios为例
+
+// 创建请求控制器 
+this.controller = new AbortController();
+console.log("初始声明的请求控制器------", this.controller);
+
+// 第一种方法：绑定事件处理程序
+this.controller.signal.addEventListener("abort", () => {
+   console.log("请求已终止，触发了onabort事件");
+   // 进行后续处理
+});
+
+// 第二种方法：try...catch
+try {
+    // 发送文件上传请求
+    const res = await this.$axios.post(api.Upload, uploadData, {
+     timeout: 0, // 设置超时时间为 0/null 表示永不超时
+     signal: this.controller.signal, // 绑定取消请求的信号量
+	});
+} catch (error) {
+    console.log("终止请求时catch的error---", error);
+    // 判断是否为取消上传
+    if (error.message == "canceled"){
+        // 进行后续处理
+    };
+}
+
+// 终止请求
+this.controller.abort();
+console.log("终止请求后的请求控制器------", this.controller);
+
+```
+
+> [!TIP]
+>
+>  注意：每个 `AbortController` 可以同时取消多个请求，但是只能取消请求一次，一个 `AbortController` 在终止过请求之后，其控制是否终止请求的 `signal.aborted`属性会从 `false`，变为 `true`，目前本人没找到恢复为 `false` 的方法，暂且认为是不可恢复的吧。如果后续请求还是绑定该请求控制器，则后续请求都会被提前终止，不会被发出。
+>
+>  如果我们想要在终止请求之后，不影响后续请求的正常发出，且后续请求也是可以被终止的，那么需要在每次发出请求之前，都通过构造函数创建一个新的的 `AbortController`，每次请求绑定的都是新的`AbortController`，这样才能做到多次请求之间不干扰。
+
+
+
+## 3. CancelToken（旧版本）
+
+ 在 `axiso` 的 `0.22.0` 之前的版本，需要使用取消令牌 `cancel token` 来终止请求，不过该 `API` 从 `0.22.0` 开始被弃用，目前已不建议再使用。当使用该方法终止请求时，如果对应请求已经被发送并且正在处理中，则会中止该请求；如果请求已经完成（即已经接收到完整的响应），则不会执行任何操作。
+该方法只能通过`try..catch`来监听取消请求操作，终止请求之后，会触发`catch`，在`catch`中进行后续处理。而且该方法在取消请求时，可以通过参数自定义`catch`的`error`中的`message`内容。
+
+```js
+// 以vue项目中使用axios为例
+
+// 这个地方需要导入原生的axios 最好不要使用二次封装后的axios
+import axios from "axios";
+
+// 创建请求令牌
+this.source = axios.CancelToken.source();
+console.log("初始声明的请求令牌---", this.source);
+
+// 第二种方法：try...catch
+try {
+    // 发送文件上传请求
+    const res = await this.$axios.post(api.Upload, uploadData, {
+     timeout: 0, // 设置超时时间为 0/null 表示永不超时
+     cancelToken: this.source.token, // 绑定取消请求的令牌
+	});
+} catch (error) {
+    console.log("终止请求时catch的error---", error);
+    // 判断是否为取消上传
+    if (error.message == "自定义取消请求的message"){
+        // 进行后续处理
+    };
+}
+
+// 终止请求
+this.source.cancel("自定义取消请求的message");
+console.log("取消请求后的请求令牌---", this.source);
+
+```
+
+> [!TIP]
+>
+> 注意：该方法与 `AbortController` 相同，都可以同时取消多个请求，但是只能取消请求一次，一个`CancelToken` 在终止过请求之后，如果后续请求还是绑定该请求令牌，则后续请求都会被提前终止，不会被发出。
+>
+>  同理，如果我们想要在终止请求之后，不影响后续请求的正常发出，且后续请求也是可以被终止的，那么需要在每次发出请求之前，都创建一个新的的 `CancelToken`，每次请求绑定的都是新的 `CancelToken`，这样才能做到多次请求之间不干扰。
+> 
+>
 
