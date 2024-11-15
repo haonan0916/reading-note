@@ -447,6 +447,8 @@ body {
 
 > [!TIP]
 >
+> 方法一：
+>
 > 使用 `css` 属性 `aspect-ratio` 来实现
 >
 > 语法格式：
@@ -460,6 +462,45 @@ body {
 > 如果 `<height-ratio>` 为 `1`，则可以省略
 >
 > `aspect-ratio:1.618`
+>
+> 方法二：
+>
+> `polyfill` 写法（兼容性更好的写法）如果 `item` 里面要放置内容，直接向 `container` 里面加就可以了
+>
+> `html`内容：
+>
+> ```html
+> <div class="item">
+> 	<div class="inner">
+>         <div class="container"></div>
+>     </div>
+> </div>
+> ```
+>
+> `css` 内容：
+>
+> ```css
+> .item {
+>     background: red;
+>     width: 50%;
+>     margin: 0 auto;
+> }
+> 
+> .inner {
+>     width: 100%;
+>     padding-top: 75%;
+>     height: 0;
+>     position: relative;
+> }
+> 
+> .container {
+>     position: absolute;
+>     inset: 0;
+>     background: black;
+> }
+> ```
+>
+> 
 
 
 
@@ -672,9 +713,9 @@ ol > li::marker {
 >       
 >
 >      是一个 CSS 变量，表示渐变的结束角度。这个变量应该在其他地方定义，例如：
->
+>    
 >      css深色版本
->
+>    
 >      ```css
 >      :root {
 >        --percentage: 70%; /* 例如，表示 70% */
@@ -694,7 +735,7 @@ ol > li::marker {
 >       
 >
 >      表示创建一个径向渐变遮罩。
->
+>    
 >      - `circle closest-side at center` 表示创建一个圆心在元素中心的径向渐变，圆的大小由最近的边决定。
 >      - `transparent 80%` 表示从圆心到 80% 的部分是透明的。
 >      - `#fff 80%` 表示从 80% 到边缘的部分是白色的。

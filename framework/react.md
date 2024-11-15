@@ -3575,3 +3575,250 @@ const App = () => {
 >
 > `props`就是汲取了纯函数的思想。`props` 的不可以变性就保证的相同的输入，页面显示的内容是一样的，并且不会产生副作用。
 
+
+
+## 5. 高阶函数 HOC 的应用
+
+1. 属性代理 —— 条件渲染
+
+```jsx
+function HOC(WrappedComponent) {
+    return props => {
+        props.isShow ? WrappedComponent : <p>empty</p>
+    }
+}
+```
+
+
+
+2. 反向继承
+
+```jsx
+const HOC = (WrappedCompoent) => {
+	return class extends WrappedComponent {
+        render {
+            return super.render();
+        }
+    }   
+}
+```
+
+ 
+
+
+
+3. 反向继承——实现所谓声明周期的拦截
+
+```jsx
+function HOC(WrappedComponent) {
+    const didMount = WrappedComponent.prototype.componentDidMount;
+    
+    return class extends WrappedComponent {
+        async componentDidMount() {
+            if (didMount) {
+                await didMount.apply(this);
+            }
+            
+            // 自定义事件处理
+            
+        }
+        
+        render() {
+            return super.render();
+        }
+    }
+}
+```
+
+
+
+4. 反向继承——计算组件的渲染时间
+
+```jsx
+class Home entends React.Component {
+    render() {
+        return <h1>Hello </h1>
+    }
+}
+
+function withTiming(WrappedComponent) {
+    let start, end;
+    
+    return class extends WrappedComponent {
+        constructor(props) {
+            super(props);
+            start = 0;
+            end = 0;
+        }
+        
+        componentWillMount() {
+            if (super.componentWillMount) {
+                super.componentWillMount();
+            }
+            start = Date.now();
+        }
+        
+         componentDidMount() {
+            if (super.componentDidMount) {
+                super.componentDidMount();
+            }
+            end = Date.now();
+             console.log('组件渲染耗时：', end - start);
+        }
+    }
+}
+```
+
+
+
+### 属性代理和反向继承对比
+
+1. 属性代理：从“组合”角度出发，有利于从外部操作 `wrappedComponent`，可以操作 `props`，或者在`wrappedComponent` 外加一些拦截器(如条件渲染等)
+2. 反向继承：从“继承”角度出发，从内部操作 `wrappedComponent`，可以操作组件内部的 `state`，生命周期和 `render` 等功能更加强大;
+
+
+
+## 6. React 中的闭包陷阱
+
+> [!TIP]
+>
+> `React Hooks` 中的闭包陷阱主要发生在两种情况：
+>
+> -  在 `useState` 中使用闭包；
+> - 在 `useEffect` 中使用闭包。 
+
+### 6.1 useState 中的闭包陷阱
+
+在 `useState` 中使用闭包，主要是因为 `useState` 的参数只会在组件挂载时执行一次。如果我们在 `useState` 中使用闭包，那么闭包中的变量值会被缓存，这意味着当我们在组件中更新状态时，闭包中的变量值不会随之更新。
+
+在 `handleClick` 函数中，使用了 `useState` 返回的 `setCount` 函数来更新 `count` 状态值。由于 `setCount` 是在 `App` 函数中定义的，而 `handleClick` 函数可以访问 `App` 函数中定义的变量和函数，因此 `handleClick` 函数形成了一个闭包，可以访问 `App` 函数中定义的 `count` 状态值和 `setCount` 函数。
+
+**示例**
+
+`React Hooks` 的闭包陷阱发生在 `useState` 钩子函数中的示例，如下：
+
+```tsx
+import React, {useState} from 'react';
+
+export const Counter: React.FC = () => {
+    const [count, setCount] = useState(0);
+    const handleClick = () => {
+        setCount(count + 1);
+    }
+    const alertFn = () => {
+        setTimeout(() => {
+            alert(count);
+        }, 300);
+    }
+    return (
+    	<>
+        	<div>
+        		<p>Count: {count}</p>
+            	<button onClick={handleClick}>+</button>
+            	<button onClick={alertFn}>alert</button>
+        	</div>
+        </>
+    )
+}
+```
+
+> [!TIP]
+>
+> 上面的代码就会产生闭包陷阱，因为我们在异步函数中直接使用了 `state` ，如果我们点击了 `alert` 按钮后，在 `300ms` 内我们再次点击 `+` 按钮，更新 `state` 的值，那么，等到 `300ms` 之后，`alert` 的值还是 `300ms` 之前的值。这就是由于闭包产生的问题。
+>
+> 解决方案就是使用 `useRef` 配合 `useState` 来使用。
+>
+> 原因就是因为 `count` 是值类型，而 `countRef` 是引用类型。
+
+```tsx
+import React, {useState, useRef, useEffect} from 'react';
+
+export const Counter: React.FC = () => {
+    const [count, setCount] = useState(0);
+    const countRef = useRef(0);
+    useEffect(() => {
+        countRef.current = count;
+    }, [count])
+    const handleClick = () => {
+        setCount(count + 1);
+    }
+    const alertFn = () => {
+        setTimeout(() => {
+            alert(countRef.current);
+        }, 300);
+    }
+    return (
+    	<>
+        	<div>
+        		<p>Count: {count}</p>
+            	<button onClick={handleClick}>+</button>
+            	<button onClick={alertFn}>alert</button>
+        	</div>
+        </>
+    )
+}
+```
+
+
+
+## 7. CSS-in-JS
+
+> [!TIP]
+>
+> 在 `react` 中，我们还有一种方式来实现 `css` 样式，就是通过在 `js` 里面写 `css`。
+>
+> 这个功能需要一个库的支持 —— `styled-components`。
+>
+> 安装 `pnpm i styled-components`。
+>
+> 使用方法：
+>
+> `ButtonStyleComponents.js`
+>
+> ```tsx
+> import styled, { css } from 'styled-components';
+> import { FC } from 'react';
+> 
+> // Button 组件
+> type ButtonPropsType = {
+>     primary?: boolean
+> }
+> 
+> const Button = styled.button`
+> 	background: transparent;
+> 	border-radius: 3px;
+> 	border: 2px solid red;
+> 	color: red;
+> 	margin: 0 1em;
+> 	padding: 0.25em 1em;
+> 	
+> 	${
+> 		(props: ButtonPropsType) => {
+>             props.primary && css`
+>             	background: red;
+>             	color: white;
+>             `
+>         }
+> 	}
+> `
+> 
+> // Container 组件
+> const Container = styled.div`
+> 	text-align: center;
+> `
+> 
+> const Demo: FC = () => {
+>     return (
+>     	<div>
+>         	<Container>
+>             	<Button>按钮</Button>
+>             </Container>
+>         </div>
+>     )
+> }
+> ```
+>
+> 
+
+
+
