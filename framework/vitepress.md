@@ -1382,5 +1382,121 @@ pnpm run docs:build
 
 
 
+## 四、项目部署到 github
 
+### 1. 新建 github 项目
+
+![github project](https://segmentfault.com/img/remote/1460000044948778)
+
+### 2. 构建 VitePress 项目
+
+#### 2.1. 设置 config 中的 base
+
+由于我们的项目名称为 `vite-press-demo`，所以我们把 `base` 设置为 `/vite-press-demo/`，需注意前后 `/`
+
+```typescript
+export default defineConfig({
+  base: '/vite-press-demo/',
+  ...,
+})
+```
+
+#### 2.2. 页面显示异常
+
+这个时候你发现本地页面显示异常
+
+![error](https://segmentfault.com/img/remote/1460000044948779)
+是因为配置了 `base` 之后，导致路径不正确，点击上面的链接即可
+![在这里插入图片描述](https://segmentfault.com/img/remote/1460000044948780)
+
+#### 2.3. favicon 显示异常
+
+配置好 `base` 之后，你发现其他页面都没问题，图片也都能正常显示，但是 `favicon` 不能正常显示。
+
+![favicon](https://segmentfault.com/img/remote/1460000044948781)
+只需要把 `head` 中配置的 `icon` 路径改下即可，加上 `/vite-press-demo` 前缀
+
+```typescript
+head: [
+    ['link', { rel: 'icon', href: '/vite-press-demo/extension.ico'}],
+], // 加上 /vite-press-demo 前缀
+```
+
+![favicon](https://segmentfault.com/img/remote/1460000044948782)
+
+#### 2.4. 运行 pnpm run docs:build 进行项目构建
+
+项目正常构建成功
+![build](https://segmentfault.com/img/remote/1460000044948783)
+
+### 3. 项目发布到 github 上
+
+#### 3.1. clone 项目，并把构建的内容发布到 main 分支
+
+**是构建之后 `dist` 文件夹中的内容，不包括 `dist` 文件夹**
+
+```shell
+.
+├── 404.html
+├── README.md
+├── api
+├── assets
+├── basic
+├── components
+├── core
+├── develop.svg
+├── ext-2.svg
+├── ext.svg
+├── extension.ico
+├── hashmap.json
+├── index.html
+├── react.svg
+├── summarize
+├── teach
+├── team
+├── tj.svg
+└── vue.svg
+```
+
+![在这里插入图片描述](https://segmentfault.com/img/remote/1460000044948784)
+
+#### 3.2. 部署到 github
+
+##### 3.2.1. 点击 Setting 按钮
+
+![setting](https://segmentfault.com/img/remote/1460000044948785)
+
+##### 3.2.2. 点击 Pages 按钮
+
+![pages](https://segmentfault.com/img/remote/1460000044948786)
+
+##### 3.2.3. 找到 Branch，并下拉选择 main 分支
+
+![main](https://segmentfault.com/img/remote/1460000044948787)
+
+##### 3.2.4. 点击 Save 保存
+
+![save](https://segmentfault.com/img/remote/1460000044948788)
+
+##### 3.2.5. 等...
+
+等几分钟，一般一分钟以内
+不停的刷新当前页面也行
+然后就会发现当前页面多了个 `Visit site` 模块
+![在这里插入图片描述](https://segmentfault.com/img/remote/1460000044948789)
+
+##### 3.2.6. 点击 Visit site
+
+![visit site](https://segmentfault.com/img/remote/1460000044948790)
+点击之后，就跳转到对应的网站链接啦...
+我这边是这个：[https://18055975947.github.io/vite-press-demo/](https://link.segmentfault.com/?enc=AZt8kDwN7jDLT%2FKIj60AXw%3D%3D.7%2Fg6ddcseD7QrCwAHJP8s7nos%2BZtDyyOUjz3RRpDvBNL%2Bko8KLSyQKYx2cC68E%2F%2F)
+
+![site](https://segmentfault.com/img/remote/1460000044948791)
+
+### 4. 更新项目
+
+当文档内容需要更新的时候，在开发完成之后，重新构建完成，把 `dist` 文件夹中内容重新发布到 `main` 分支即可，剩下的就是等就行
+也可以点击 `Setting-> Pages` 模块刷新页面
+可以看到这下面有部署的时间点
+![loading](https://segmentfault.com/img/remote/1460000044948792)
 
