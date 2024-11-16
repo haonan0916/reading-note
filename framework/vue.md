@@ -2958,3 +2958,177 @@ const handleScroll = () => {
 >
 > 
 
+
+
+# vue项目中如何使用cdn axios
+
+在 `Vue` 项目中使用 `CDN` 引入 `Axios`，可以通过以下步骤完成：使用 `CDN` 引入 `Axios` 的好处包括减少打包体积、提升加载速度、简化项目依赖管理。其中，减少打包体积是最显著的优势之一。通过 `CDN` 引入，`Axios` 库不需要被打包进项目的最终构建文件，极大地减少了文件体积，提高了网页的加载速度。
+
+## 一、什么是CDN和Axios？
+
+### 1、CDN的定义和作用
+
+`CDN`（内容分发网络）是一种通过分布在多个不同地理位置的服务器网络来分发内容的技术。它的主要作用是通过将内容缓存到离用户最近的服务器上，从而加速内容的传输速度，减少网络延迟，提高用户体验。
+
+### 2、Axios的定义和功能
+
+`Axios` 是一个基于 `Promise` 的 `HTTP` 库，可以用在浏览器和 `Node.js` 中。它提供了一系列功能，如发送异步`HTTP` 请求、拦截请求和响应、转换请求和响应数据、取消请求、自动转换 `JSON` 数据等。`Axios` 的易用性和强大的功能使其成为许多前端开发者的首选 `HTTP` 库。
+
+
+
+## 二、为什么选择CDN引入Axios？
+
+### 1、减少打包体积
+
+通过 `CDN` 引入 `Axios`，项目的构建文件中不需要包含 `Axios` 库，这可以显著减少打包体积，提高网页的加载速度。对于大型项目，减少打包体积尤为重要，因为这可以显著提升用户体验。
+
+### 2、提升加载速度
+
+`CDN` 服务器通常分布在全球各地，可以通过就近原则将内容传输给用户，从而加速内容加载速度。`CDN` 还可以利用浏览器的缓存机制，当用户访问不同使用相同 `CDN` 资源的网站时，可以直接从缓存中读取资源，进一步提升加载速度。
+
+### 3、简化项目依赖管理
+
+使用 `CDN` 引入可以减少项目中的依赖包，使项目结构更加简洁。特别是在多团队协作开发中，使用 `CDN` 可以减少依赖冲突和版本不一致的问题。
+
+
+
+## 三、如何在Vue项目中使用CDN引入Axios？
+
+### 1、在HTML文件中引入Axios
+
+首先，在 `Vue` 项目的`public/index.html`文件中，通过 `script` 标签引入 `Axios` 的 `CDN` 链接：
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vue Project</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- 引入Axios的CDN链接 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 引入Vue的构建文件 -->
+    <script src="/dist/build.js"></script>
+  </body>
+</html>
+```
+
+### 2、在Vue组件中使用Axios
+
+在 `Vue` 组件中，你可以直接使用全局 `Axios` 对象进行 `HTTP` 请求：
+
+```vue
+<template>
+  <div>
+    <h1>Vue Project with CDN Axios</h1>
+    <button @click="fetchData">Fetch Data</button>
+    <div v-if="data">
+      <pre>{{ data }}</pre>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      data: null,
+    };
+  },
+  methods: {
+    fetchData() {
+      axios.get('https://api.example.com/data')
+        .then(response => {
+          this.data = response.data;
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+  },
+};
+
+</script>
+```
+
+
+
+### 3、配置环境变量
+
+为了在开发和生产环境中灵活切换 `Axios` 的引入方式，可以使用环境变量。在项目根目录下创建`.env.development`和`.env.production`文件：
+
+`.env.development`：
+
+```js
+VUE_APP_AXIOS_CDN=https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
+```
+
+`.env.production`：
+
+```js
+VUE_APP_AXIOS_CDN=https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
+```
+
+在`public/index.html`中使用环境变量：
+
+```html
+<script src="<%= process.env.VUE_APP_AXIOS_CDN %>"></script>
+```
+
+
+
+### 4、使用Webpack插件动态引入CDN
+
+通过`html-webpack-plugin`插件，可以在构建过程中动态引入 `CDN` 资源。首先，安装插件：
+
+```js
+npm install html-webpack-plugin --save-dev
+```
+
+然后，在`vue.config.js`中进行配置：
+
+```js
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  configureWebpack: {
+    plugins: [
+      new HtmlWebpackPlugin({
+        template: 'public/index.html',
+        cdn: process.env.VUE_APP_AXIOS_CDN,
+      }),
+    ],
+  },
+};
+```
+
+在`public/index.html`中使用插件提供的变量：
+
+```html
+<script src="<%= htmlWebpackPlugin.options.cdn %>"></script>
+```
+
+
+
+## 四、常见问题及解决方案
+
+### 1、Axios未定义
+
+如果在使用 `CDN` 引入 `Axios` 后，控制台报错“ `Axios` 未定义”，可能是因为 `Axios` 的 `CDN` 资源加载失败或加载顺序不正确。确保 `CDN` 链接正确，并在 `Vue` 实例初始化之前加载 `Axios`。
+
+### 2、环境变量未生效
+
+如果环境变量未生效，检查`.env`文件的命名是否正确，确保以`VUE_APP_`开头，并在`vue.config.js`中正确引用环境变量。
+
+### 3、版本不兼容
+
+使用 `CDN` 时，注意 `Axios` 版本与项目中其他依赖库的兼容性。尽量选择稳定版本的 `Axios`，避免使用 `beta` 或`alpha` 版本。
+
+
+
+## 五、总结
+
+通过CDN引入Axios，可以显著减少打包体积、提升加载速度、简化项目依赖管理。具体步骤包括在HTML文件中引入Axios、在Vue组件中使用Axios、配置环境变量、使用Webpack插件动态引入CDN等。遇到常见问题时，可以通过检查CDN链接、环境变量配置、版本兼容性等方式进行排查和解决。**通过合理使用CDN和Axios，可以提升Vue项目的性能和开发效率。**

@@ -806,6 +806,142 @@ function throttle(fn, delay) {
 
 ![img](/js_images/webworker.png)
 
+> [!CAUTION]
+>
+> 使用注意事项：
+>
+> `new Worker()` 里面的 `js` 文件必须是线上的一个文件地址，不能是本地的 `js` 文件。
+>
+> 如果是 `vite / webpack` 项目，我们可以先把该 `js` 文件放到 `public ` 文件夹下来进行使用。
+>
+> - `webworker` 不能使用本地文件，必须是网络上的同源文件。
+> - `webwoker` 不能使用 `window` 上的 `dom` 操作，也不能获取 `dom` 对象，`dom` 相关的东西只有主线程有。只能做一些计算相关的操作。
+> - 有的东西是无法通过主线程传递多个子线程的，比如方法，`dom` 结点，一些对象里的特殊设置（`freeze`、`getter`、`setter` 这些，所以 `vue` 的响应式对象是不能传递的）
+> - 模块的引入问题
+
+
+
+`a.js`
+
+```js
+export function a1() {
+    
+}
+```
+
+
+
+`list.js`
+
+```js
+// 如果在这个文件中想引入 a.js 文件（使用 ES5）
+// importScripts('http://localhost:5173/a.js'); // 必须网络地址，这个网络地址可以跨域
+
+// 如果在这个文件中想引入 a.js 文件（使用 ES6）
+import {a1} from 'http://localhost:5173/a.js';
+
+
+let a = 1 + 1;
+self.postMessage(a);
+
+self.addEventerListener((event) => {
+    console.log("收到");
+});
+```
+
+
+
+
+
+`Example.vue`
+
+```vue
+<script setup>
+    // 第二个参数 type: 'module' 表示支持 ES6 模块引入
+	let worker1 = new Worker('http://localhost:5173/list.js', {
+        type: "module"
+    });
+	worker1.addEventListener('message', (e) => {
+        console.log(e);
+    });
+</script>
+
+<template>
+	<div>
+        <button @click="() => {worker1.postMessage('你好')}">
+        	发消息给 worker1    
+    	</button>
+    </div>
+</template>
+```
+
+
+
+## 使用场景
+
+- 使用 `webworker` 处理可视化的效果（如：图片加滤镜等效果，因为这些都需要消耗非常大的计算量）
+- 使用 `webworker` 处理导出大批量数据的表格功能（如：导出 `10w` 个表格） 
+
+`excelwork.js`
+
+```js
+importScript('./xlsx.js')
+let arr = [];
+for (let i = 0; i < 100000; i++) {
+    arr.push({
+        id: i,
+        name: '张三' + i + '号',
+        location: 'xxx大道' + i + '号',
+        age: i,
+        a: i * 2,
+        b: i / 2,
+        c: i + 2,
+        d: 233,
+        e: 123,
+        f: 2332
+    })
+}
+
+self.addEventListener('message', (e) => {
+    const sheet = XLSX.utils.json_to_sheet(arr);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, sheet, 'Sheet1');
+    self.postMessage(workbook);
+})
+```
+
+
+
+```vue
+<script setup>
+import {writeFile} from 'xlsx'
+let worker = new Worker('http://localhost:5173/excelwork.js');
+work1.onmessage = function(e) {
+    let workbook = e.data;
+    writeFile(workbook, "test.xlsx");
+}
+    
+function exportExcel() {
+    work1.postMessage("");
+}
+</script>
+
+<template>
+	<div class="about">
+        <input />
+        <button @click="exportExcel">
+        	导出    
+    	</button>
+    </div>
+</template>
+```
+
+
+
+如果上面的两个场景不做优化，则会导致页面直接卡死，我们在卡死的这段时间内是无法操作页面的。
+
+
+
 
 
 # 面向对象
@@ -1519,3 +1655,51 @@ console.log("取消请求后的请求令牌---", this.source);
 2. 构造函数继承：在子类的构造函数中调用父类的构造函数。
 3. 组合继承：结合原型链继承和构造函数继承，避免单独使用原型链继承时子类实例共享父类引用属性的问题。
 4. `ES6 Class` 继承：使用 `class` 和 `extends` 关键字，这是最现代和直观的继承方式。
+
+
+
+# 如何使用for...of遍历对象
+
+1. **类数组对象**
+
+如果需要遍历的对象是类数组对象，用 `Array.from` 转成数组对象即可。
+
+```js
+var obj = {
+    0: 'one',
+    1: 'two',
+    length: 2
+};
+
+obj = Array.from(obj);
+for (let key of obj) {
+    console.log(key);
+}
+```
+
+
+
+2. **非类数组对象**
+
+如果不是类数组对象，就给对象添加一个 `[Symbol.iterator]` 属性，并指向一个迭代器即可。
+
+```js
+var obj = {
+    a: 1, 
+    b: 2, 
+    c: 3
+};
+obj[Symbol.iterator] = function*() {
+    var keys = Object.keys(obj);
+    for (var k of keys) {
+        yield [k, obj[k]]
+    }
+}
+
+for (var [k, v] of obj) {
+    console.log(k, v);
+}
+```
+
+
+
